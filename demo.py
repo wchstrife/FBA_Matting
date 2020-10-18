@@ -12,9 +12,10 @@ import cv2
 import numpy as np
 import torch
 
+device = 'cuda:2' if torch.cuda.is_available() else 'cpu'
 
 def np_to_torch(x):
-    return torch.from_numpy(x).permute(2, 0, 1)[None, :, :, :].float().cuda()
+    return torch.from_numpy(x).permute(2, 0, 1)[None, :, :, :].float().to(device)
 
 
 def scale_input(x: np.ndarray, scale: float, scale_type) -> np.ndarray:
@@ -38,9 +39,9 @@ def predict_fba_folder(model, args):
 
         fg, bg, alpha = pred(image_np, trimap_np, model)
 
-        cv2.imwrite(os.path.join(save_dir, item_dict['name'][:-4] + '_fg.png'), fg[:, :, ::-1] * 255)
-        cv2.imwrite(os.path.join(save_dir, item_dict['name'][:-4] + '_bg.png'), bg[:, :, ::-1] * 255)
-        cv2.imwrite(os.path.join(save_dir, item_dict['name'][:-4] + '_alpha.png'), alpha * 255)
+        cv2.imwrite(os.path.join(save_dir, 'fg', item_dict['name'][:-4] + '_fg.png'), fg[:, :, ::-1] * 255)
+        cv2.imwrite(os.path.join(save_dir, 'bg', item_dict['name'][:-4] + '_bg.png'), bg[:, :, ::-1] * 255)
+        cv2.imwrite(os.path.join(save_dir, 'alpha', item_dict['name'][:-4] + '_alpha.png'), alpha * 255)
 
 
 def pred(image_np: np.ndarray, trimap_np: np.ndarray, model) -> np.ndarray:
@@ -89,9 +90,20 @@ if __name__ == '__main__':
     parser.add_argument('--weights', default='FBA.pth')
     parser.add_argument('--image_dir', default='./examples/images', help="")
     parser.add_argument('--trimap_dir', default='./examples/trimaps', help="")
-    parser.add_argument('--output_dir', default='./examples/predictions', help="")
+    # parser.add_argument('--image_dir', default='./Dataset/alphamatting.com/input_training_lowres', help="")
+    # parser.add_argument('--trimap_dir', default='./Dataset/alphamatting.com/trimap_training_lowres/Trimap1', help="")
+    parser.add_argument('--output_dir', default='./examples/predictions/', help="")
 
     args = parser.parse_args()
     model = build_model(args)
+    print(model)
     model.eval()
     predict_fba_folder(model, args)
+
+    # # 测试代码，必须要在device:0上使用
+    # from torchsummary import summary
+    # device = 'cuda' if torch.cuda.is_available() else 'cpu'
+    # model.to(device)
+    # summary(model, [(3, 1920, 1080), (2, 1920, 1080), (3, 1920, 1080), (6, 1920, 1080)])
+
+

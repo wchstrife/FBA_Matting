@@ -15,13 +15,15 @@ def build_model(args):
         batch_norm = False
     net_decoder = builder.build_decoder(arch=args.decoder, batch_norm=batch_norm)
 
+    device = 'cuda:2' if torch.cuda.is_available() else 'cpu'
+
     model = MattingModule(net_encoder, net_decoder)
 
-    model.cuda()
-
     if(args.weights != 'default'):
-        sd = torch.load(args.weights)
+        sd = torch.load(args.weights, map_location=device)
         model.load_state_dict(sd, strict=True)
+
+    model.to(device)
 
     return model
 
@@ -33,7 +35,7 @@ class MattingModule(nn.Module):
         self.decoder = net_dec
 
     def forward(self, image, two_chan_trimap, image_n, trimap_transformed):
-        resnet_input = torch.cat((image_n, trimap_transformed, two_chan_trimap), 1)
+        resnet_input = torch.cat((image_n, trimap_transformed, two_chan_trimap), 1) # 3+6+2
         conv_out, indices = self.encoder(resnet_input, return_feature_maps=True)
         return self.decoder(conv_out, image, indices, two_chan_trimap)
 
@@ -55,11 +57,11 @@ class ModelBuilder():
         if(num_channels > 3):
             print(f'modifying input layer to accept {num_channels} channels')
             net_encoder_sd = net_encoder.state_dict()
-            conv1_weights = net_encoder_sd['conv1.weight']
+            conv1_weights = net_encoder_sd['conv1.weight']      # 原ResNet第一层的参数
 
             c_out, c_in, h, w = conv1_weights.size()
             conv1_mod = torch.zeros(c_out, num_channels, h, w)
-            conv1_mod[:, :3, :, :] = conv1_weights
+            conv1_mod[:, :3, :, :] = conv1_weights              # conv1_mod前3个通道的参数跟原来保持一致
 
             conv1 = net_encoder.conv1
             conv1.in_channels = num_channels
@@ -361,3 +363,4 @@ class fba_decoder(nn.Module):
         output = torch.cat((alpha, F, B), 1)
 
         return output
+

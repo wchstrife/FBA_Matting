@@ -5,3 +5,8 @@
 
 *.pth
 .ipynb_checkpoints
+
+examples/predictions/*
+result/*
+Dataset/alphamatting.com/*
+Dataset/Adobe1K/*
