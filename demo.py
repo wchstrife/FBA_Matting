@@ -95,10 +95,13 @@ if __name__ == '__main__':
     parser.add_argument('--output_dir', default='./examples/predictions/', help="")
 
     args = parser.parse_args()
+
+    print("Build Model")
     model = build_model(args)
-    print(model)
-    model.eval()
-    predict_fba_folder(model, args)
+    
+    # print(model)
+    # model.eval()
+    # predict_fba_folder(model, args)
 
     # # 测试代码，必须要在device:0上使用
     # from torchsummary import summary

@@ -4,6 +4,8 @@ import networks.resnet_GN_WS as resnet_GN_WS
 import networks.layers_WS as L
 import networks.resnet_bn as resnet_bn
 
+# from torchsummary import summary
+
 
 def build_model(args):
     builder = ModelBuilder()
@@ -15,7 +17,8 @@ def build_model(args):
         batch_norm = False
     net_decoder = builder.build_decoder(arch=args.decoder, batch_norm=batch_norm)
 
-    device = 'cuda:2' if torch.cuda.is_available() else 'cpu'
+    # device = 'cuda' if torch.cuda.is_available() else 'cpu'
+    #summary(net_encoder.to(device),(11, 320, 320))
 
     model = MattingModule(net_encoder, net_decoder)
 
